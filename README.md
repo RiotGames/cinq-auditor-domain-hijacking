@@ -1,2 +1,0 @@
-cinq-auditor-domain-hijacking
-=============================
