@@ -48,7 +48,7 @@ setuptools.setup(
         'Intended Audience :: Information Technology',
 
         # License information
-        'License :: OSI Approved :: MIT',
+        'License :: OSI Approved :: Apache Software License',
 
         # Supported python versions
         'Programming Language :: Python :: 3.5',
@@ -61,7 +61,7 @@ setuptools.setup(
         # Supported OS's
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX :: Linux',
-        'Operating System :: Unix'
+        'Operating System :: Unix',
 
         # Extra metadata
         'Environment :: Console',
