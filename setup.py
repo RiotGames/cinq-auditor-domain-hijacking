@@ -5,7 +5,7 @@ import setuptools
 
 
 path = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(path, 'README.md')) as fd:
+with open(os.path.join(path, 'README.rst')) as fd:
     long_desc = fd.read()
 
 setuptools.setup(
@@ -35,10 +35,10 @@ setuptools.setup(
     # Metadata for the project
     description='Domain Hijacking auditor',
     long_description=long_desc,
-    url='https://github.com/CloudInquisitor/cinq-auditor-domain-hijacking/',
-    author='Riot Games InfoSec',
+    url='https://github.com/RiotGames/cinq-auditor-domain-hijacking/',
+    author='Riot Games Security',
     author_email='security@riotgames.com',
-    license='MIT',
+    license='Apache 2.0',
     classifiers=[
         # Current project status
         'Development Status :: 4 - Beta',
