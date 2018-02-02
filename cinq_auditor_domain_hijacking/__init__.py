@@ -284,7 +284,7 @@ class S3WithoutEndpointAudit(DomainAudit):
                 return rr
 
     def audit(self, record, zone):
-        name = record.value.strip('.')
+        name = record.name.strip('.')
         if name not in self.buckets:
             return [
                 {
