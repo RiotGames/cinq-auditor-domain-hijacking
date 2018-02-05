@@ -67,18 +67,19 @@ class DomainHijackAuditor(BaseAuditor):
 
             for dist in dists:
                 for org in dist.origins:
-                    bucket = org.replace('.s3.amazonaws.com', '')
+                    if org['type'] == 's3':
+                        bucket = org['source'].replace('.s3.amazonaws.com', '')
 
-                    if bucket not in buckets:
-                        key = '{} ({})'.format(bucket, dist.type)
-                        issues.append({
-                            'key': key,
-                            'value': 'S3Bucket {} doesnt exist on any known account. Referenced by {} on {}'.format(
-                                bucket,
-                                dist.domain_name,
-                                dist.account,
-                            )
-                        })
+                        if bucket not in buckets:
+                            key = '{} ({})'.format(bucket, dist.type)
+                            issues.append({
+                                'key': key,
+                                'value': 'S3Bucket {} doesnt exist on any known account. Referenced by {} on {}'.format(
+                                    bucket,
+                                    dist.domain_name,
+                                    dist.account,
+                                )
+                            })
             # endregion
 
             # region Process new, old, fixed issue lists
