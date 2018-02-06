@@ -45,7 +45,7 @@ class DomainHijackAuditor(BaseAuditor):
             buckets = S3Bucket.get_all()
             dists = list(CloudFrontDist.get_all().values())
             ec2_public_ips = [x.public_ip for x in EC2Instance.get_all().values() if x.public_ip]
-            beanstalks = list(BeanStalk.get_all().values())
+            beanstalks = {x.cname: x for x in BeanStalk.get_all().values()}
 
             existing_issues = DomainHijackIssue.get_all()
             issues = []
@@ -187,7 +187,7 @@ class ElasticBeanstalkAudit(DomainAudit):
 
     def audit(self, record, zone):
         issues = []
-        for name in record.value:
+        for name in [x.strip('.') for x in record.value]:
             if name not in self.beanstalks:
                 if dns_record_exists(name):
                     issues.append({
