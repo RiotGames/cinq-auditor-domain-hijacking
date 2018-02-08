@@ -155,7 +155,7 @@ class DomainHijackAuditor(BaseAuditor):
             try:
                 sender = self.dbconfig.get('from_address', NS_EMAIL)
                 recipients = self.dbconfig.get('email_recipients', self.ns)
-                subject = self.dbconfig.get('hijack_subject', NS_EMAIL, 'Potential domain hijack possibility detected')
+                subject = self.dbconfig.get('hijack_subject', NS_EMAIL, 'Domain hijack possibility detected')
 
                 send_email(self.name, sender, recipients, subject, issues_html, issues_text)
             except Exception as ex:
