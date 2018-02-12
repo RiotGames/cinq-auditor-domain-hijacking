@@ -28,6 +28,7 @@ class DomainHijackAuditor(BaseAuditor):
         ConfigOption('enabled', False, 'bool', 'Enable the Domain Hijacking auditor'),
         ConfigOption('interval', 30, 'int', 'Run frequency in minutes'),
         ConfigOption('email_recipients', ['changeme@domain.tld'], 'array', 'List of emails to receive alerts'),
+        ConfigOption('hijack_subject', 'Potential domain hijack detected', 'string', 'Email subject for domain hijack notifications'),
     )
 
     def run(self, *args, **kwargs):
@@ -155,7 +156,7 @@ class DomainHijackAuditor(BaseAuditor):
             try:
                 sender = self.dbconfig.get('from_address', NS_EMAIL)
                 recipients = self.dbconfig.get('email_recipients', self.ns)
-                subject = self.dbconfig.get('hijack_subject', NS_EMAIL, 'Domain hijack possibility detected')
+                subject = self.dbconfig.get('hijack_subject', self.ns)
 
                 send_email(self.name, sender, recipients, subject, issues_html, issues_text)
             except Exception as ex:
