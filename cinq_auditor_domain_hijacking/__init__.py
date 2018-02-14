@@ -2,10 +2,10 @@ import logging
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
-from cloud_inquisitor import db
 from cloud_inquisitor.config import dbconfig, ConfigOption
 from cloud_inquisitor.constants import NS_AUDITOR_DOMAIN_HIJACKING, NS_EMAIL, RGX_BUCKET, RGX_BUCKET_WEBSITE, \
     RGX_INSTANCE_DNS
+from cloud_inquisitor.database import db
 from cloud_inquisitor.plugins import BaseAuditor
 from cloud_inquisitor.plugins.notifiers.email import send_email
 from cloud_inquisitor.plugins.types.issues import DomainHijackIssue
