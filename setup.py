@@ -24,7 +24,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     setup_requires=['setuptools_scm'],
     install_requires=[
-        'cloud-inquisitor~=1.1.0',
+        'cloud-inquisitor~=1.1.2',
         'cinq-collector-aws~=1.1.0',
         'dnspython~=1.15.0',
     ],

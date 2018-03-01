@@ -22,7 +22,6 @@ class DomainHijackAuditor(BaseAuditor):
 
     name = 'Domain Hijacking'
     ns = NS_AUDITOR_DOMAIN_HIJACKING
-    enabled = dbconfig.get('enabled', ns, False)
     interval = dbconfig.get('interval', ns, 30)
     options = (
         ConfigOption('enabled', False, 'bool', 'Enable the Domain Hijacking auditor'),
