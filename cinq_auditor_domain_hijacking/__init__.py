@@ -88,7 +88,7 @@ class DomainHijackAuditor(BaseAuditor):
             fixed_issues = []
 
             for data in issues:
-                issue_id = get_resource_id('dhi', data)
+                issue_id = get_resource_id('dhi', ['{}={}'.format(k, v) for k, v in data.items()])
 
                 if issue_id in existing_issues:
                     issue = existing_issues[issue_id]
