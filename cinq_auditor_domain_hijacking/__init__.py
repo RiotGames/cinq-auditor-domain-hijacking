@@ -42,16 +42,16 @@ class DomainHijackAuditor(BaseAuditor):
         """
         try:
             zones = list(DNSZone.get_all().values())
-            buckets = S3Bucket.get_all()
+            buckets = {k.lower(): v for k, v in S3Bucket.get_all().items()}
             dists = list(CloudFrontDist.get_all().values())
             ec2_public_ips = [x.public_ip for x in EC2Instance.get_all().values() if x.public_ip]
-            beanstalks = {x.cname: x for x in BeanStalk.get_all().values()}
+            beanstalks = {x.cname.lower(): x for x in BeanStalk.get_all().values()}
 
             existing_issues = DomainHijackIssue.get_all()
             issues = []
 
             # List of different types of domain audits
-            domain_audits = [
+            auditors = [
                 ElasticBeanstalkAudit(beanstalks),
                 S3Audit(buckets),
                 S3WithoutEndpointAudit(buckets),
@@ -61,9 +61,9 @@ class DomainHijackAuditor(BaseAuditor):
             # region Build list of active issues
             for zone in zones:
                 for record in zone.records:
-                    for domain_audit in domain_audits:
-                        if domain_audit.match(record):
-                            issues.extend(domain_audit.audit(record, zone))
+                    for auditor in auditors:
+                        if auditor.match(record):
+                            issues.extend(auditor.audit(record, zone))
 
             for dist in dists:
                 for org in dist.origins:
@@ -181,13 +181,13 @@ class ElasticBeanstalkAudit(DomainAudit):
         self.beanstalks = beanstalks
 
     def match(self, rr):
-        for name in rr.value:
+        for name in [x.lower() for x in rr.value]:
             if name.find('elasticbeanstalk.com') >= 0:
                 return rr
 
     def audit(self, record, zone):
         issues = []
-        for name in [x.strip('.') for x in record.value]:
+        for name in [x.strip('.').lower() for x in record.value]:
             if name not in self.beanstalks:
                 if dns_record_exists(name):
                     issues.append({
@@ -220,7 +220,7 @@ class S3Audit(DomainAudit):
         self.buckets = buckets
 
     def match(self, rr):
-        for name in rr.value:
+        for name in [x.lower() for x in rr.value]:
             if RGX_BUCKET.match(name):
                 return rr
 
@@ -228,7 +228,7 @@ class S3Audit(DomainAudit):
         issues = []
         try:
             if type(record.value) in (tuple, list):
-                for name in record.value:
+                for name in [x.lower() for x in record.value]:
                     bucketName, region = parse_bucket_info(name)
 
                     if bucketName not in self.buckets:
@@ -280,12 +280,12 @@ class S3WithoutEndpointAudit(DomainAudit):
         self.buckets = buckets
 
     def match(self, rr):
-        for name in rr.value:
+        for name in [x.lower() for x in rr.value]:
             if RGX_BUCKET_WEBSITE.match(name):
                 return rr
 
     def audit(self, record, zone):
-        name = record.name.strip('.')
+        name = record.name.strip('.').lower()
         if name not in self.buckets:
             return [
                 {
@@ -310,13 +310,13 @@ class EC2PublicDns(DomainAudit):
         self.ec2_public_ips = ec2_public_ips
 
     def match(self, rr):
-        for name in rr.value:
+        for name in [x.lower() for x in rr.value]:
             if RGX_INSTANCE_DNS.match(name):
                 return rr
 
     def audit(self, record, zone):
         if record.type.lower() in ('cname', 'alias'):
-            for name in record.value:
+            for name in [x.lower() for x in record.value]:
                 ip = '.'.join(RGX_INSTANCE_DNS.match(name).groups())
                 if ip not in self.ec2_public_ips:
                     return [
