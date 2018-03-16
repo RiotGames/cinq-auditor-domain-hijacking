@@ -241,6 +241,18 @@ class S3Audit(DomainAudit):
                                 zone.source
                             )
                         })
+
+                    if bucketName != record.name:
+                        issues.append({
+                            'key': '{}/{}'.format(zone.name, record.name),
+                            'value': 'Misconfigured CNAME to S3 for {}/{}/{}. Points to {} but should be {}'.format(
+                                zone.source,
+                                zone.name,
+                                record.name,
+                                bucketName,
+                                record.name
+                            )
+                        })
             elif type(record.value) == str:
                 bucketName, region = parse_bucket_info(record.value)
 
