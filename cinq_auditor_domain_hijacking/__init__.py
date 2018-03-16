@@ -229,6 +229,7 @@ class S3Audit(DomainAudit):
         try:
             if type(record.value) in (tuple, list):
                 for name in [x.lower() for x in record.value]:
+                    hostname = record.name.rstrip('.')
                     bucketName, region = parse_bucket_info(name)
 
                     if bucketName not in self.buckets:
@@ -237,18 +238,18 @@ class S3Audit(DomainAudit):
                             'value': 'S3Bucket {} doesnt exist on any known account. Referenced by {}/{} on {}'.format(
                                 bucketName,
                                 zone.name,
-                                record.name,
+                                hostname,
                                 zone.source
                             )
                         })
 
-                    if bucketName != record.name:
+                    if bucketName != hostname:
                         issues.append({
-                            'key': '{}/{}'.format(zone.name, record.name),
+                            'key': '{}/{}'.format(zone.name, hostname),
                             'value': 'Misconfigured CNAME to S3 for {}/{}/{}. Points to {} but should be {}'.format(
                                 zone.source,
                                 zone.name,
-                                record.name,
+                                hostname,
                                 bucketName,
                                 record.name
                             )
