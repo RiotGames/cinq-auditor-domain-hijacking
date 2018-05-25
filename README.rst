@@ -23,5 +23,5 @@ Configuration Options
 +------------------------+---------------------------+--------+------------------------------------------------------------------------------------------+
 | email_recipients       | ['changeme@domain.tld']   | array  | List of emails to receive alerts                                                         |
 +------------------------+---------------------------+--------+------------------------------------------------------------------------------------------+
-| hijack_subject         | Potential hijack detected | string | Email subject for domain hijack notifications             |
+| hijack_subject         | Potential hijack detected | string | Email subject for domain hijack notifications                                            |
 +------------------------+---------------------------+--------+------------------------------------------------------------------------------------------+
