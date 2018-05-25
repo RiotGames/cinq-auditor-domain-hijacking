@@ -3,14 +3,23 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
 from cloud_inquisitor.config import dbconfig, ConfigOption
-from cloud_inquisitor.constants import NS_AUDITOR_DOMAIN_HIJACKING, NS_EMAIL, RGX_BUCKET, RGX_BUCKET_WEBSITE, \
+from cloud_inquisitor.constants import (
+    NS_AUDITOR_DOMAIN_HIJACKING,
+    RGX_BUCKET,
+    RGX_BUCKET_WEBSITE,
     RGX_INSTANCE_DNS
+)
 from cloud_inquisitor.database import db
 from cloud_inquisitor.plugins import BaseAuditor
-from cloud_inquisitor.plugins.notifiers.email import send_email
 from cloud_inquisitor.plugins.types.issues import DomainHijackIssue
 from cloud_inquisitor.plugins.types.resources import EC2Instance, S3Bucket, CloudFrontDist, DNSZone, BeanStalk
-from cloud_inquisitor.utils import get_template, parse_bucket_info, get_resource_id
+from cloud_inquisitor.utils import (
+    get_template,
+    parse_bucket_info,
+    get_resource_id,
+    send_notification,
+    NotificationContact
+)
 from dns.resolver import query, NXDOMAIN
 
 
@@ -153,11 +162,16 @@ class DomainHijackAuditor(BaseAuditor):
             )
 
             try:
-                sender = self.dbconfig.get('from_address', NS_EMAIL)
                 recipients = self.dbconfig.get('email_recipients', self.ns)
                 subject = self.dbconfig.get('hijack_subject', self.ns, 'Potential domain hijack detected')
 
-                send_email(self.name, sender, recipients, subject, issues_html, issues_text)
+                send_notification(
+                    subsystem=self.name,
+                    recipients=[NotificationContact('email', addr) for addr in recipients],
+                    subject=subject,
+                    body_html=issues_html,
+                    body_text=issues_text
+                )
             except Exception as ex:
                 self.log.exception('Failed sending notification email: {}'.format(ex))
 
