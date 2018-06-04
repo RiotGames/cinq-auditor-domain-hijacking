@@ -2,6 +2,9 @@
 cinq-auditor-domain-hijacking
 *****************************
 
+
+Please open issues in the `Cloud-Inquisitor <https://github.com/RiotGames/cloud-inquisitor/issues/new?labels=cinq-auditor-domain-hijacking>`_ repository
+
 ===========
 Description
 ===========
