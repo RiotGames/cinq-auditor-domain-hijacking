@@ -1,6 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from cloud_inquisitor.config import dbconfig, ConfigOption
 from cloud_inquisitor.constants import (
@@ -37,7 +37,15 @@ class DomainHijackAuditor(BaseAuditor):
         ConfigOption('interval', 30, 'int', 'Run frequency in minutes'),
         ConfigOption('email_recipients', ['changeme@domain.tld'], 'array', 'List of emails to receive alerts'),
         ConfigOption('hijack_subject', 'Potential domain hijack detected', 'string', 'Email subject for domain hijack notifications'),
+        ConfigOption('alert_frequency', 24, 'int', 'How frequent in hours, to alert'),
     )
+
+    def __init__(self):
+        super().__init__()
+
+        self.recipients = dbconfig.get('email_recipients', self.ns)
+        self.subject = dbconfig.get('hijack_subject', self.ns, 'Potential domain hijack detected')
+        self.alert_frequency = dbconfig.get('alert_frequency', self.ns, 24)
 
     def run(self, *args, **kwargs):
         """Update the cache of all DNS entries and perform checks
@@ -101,6 +109,7 @@ class DomainHijackAuditor(BaseAuditor):
 
                 if issue_id in existing_issues:
                     issue = existing_issues[issue_id]
+
                     if issue.update({'state': 'EXISTING', 'end': None}):
                         db.session.add(issue.issue)
 
@@ -122,12 +131,23 @@ class DomainHijackAuditor(BaseAuditor):
                 if issue.id not in new_issues and issue.id not in old_issues:
                     fixed_issues.append(issue.to_json())
                     db.session.delete(issue.issue)
-            db.session.commit()
             # endregion
+
+            # Only alert if its been more than a day since the last alert
+            alert_cutoff = datetime.now() - timedelta(hours=self.alert_frequency)
+            old_alerts = []
+            for issue_id, issue in old_issues.items():
+                if issue.last_alert and issue.last_alert < alert_cutoff:
+                    if issue.update({'last_alert': datetime.now()}):
+                        db.session.add(issue.issue)
+
+                    old_alerts.append(issue)
+
+            db.session.commit()
 
             self.notify(
                 [x.to_json() for x in new_issues.values()],
-                [x.to_json() for x in old_issues.values()],
+                [x.to_json() for x in old_alerts],
                 fixed_issues
             )
         finally:
@@ -162,13 +182,10 @@ class DomainHijackAuditor(BaseAuditor):
             )
 
             try:
-                recipients = self.dbconfig.get('email_recipients', self.ns)
-                subject = self.dbconfig.get('hijack_subject', self.ns, 'Potential domain hijack detected')
-
                 send_notification(
                     subsystem=self.name,
-                    recipients=[NotificationContact('email', addr) for addr in recipients],
-                    subject=subject,
+                    recipients=[NotificationContact('email', addr) for addr in self.recipients],
+                    subject=self.subject,
                     body_html=issues_html,
                     body_text=issues_text
                 )
