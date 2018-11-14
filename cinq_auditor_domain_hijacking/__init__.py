@@ -1,4 +1,4 @@
-import logging
+import logging, re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 
@@ -36,7 +36,8 @@ class DomainHijackAuditor(BaseAuditor):
         ConfigOption('enabled', False, 'bool', 'Enable the Domain Hijacking auditor'),
         ConfigOption('interval', 30, 'int', 'Run frequency in minutes'),
         ConfigOption('email_recipients', ['changeme@domain.tld'], 'array', 'List of emails to receive alerts'),
-        ConfigOption('hijack_subject', 'Potential domain hijack detected', 'string', 'Email subject for domain hijack notifications'),
+        ConfigOption('hijack_subject', 'Potential domain hijack detected', 'string',
+                     'Email subject for domain hijack notifications'),
         ConfigOption('alert_frequency', 24, 'int', 'How frequent in hours, to alert'),
     )
 
@@ -85,7 +86,7 @@ class DomainHijackAuditor(BaseAuditor):
             for dist in dists:
                 for org in dist.origins:
                     if org['type'] == 's3':
-                        bucket = org['source'].replace('.s3.amazonaws.com', '')
+                        bucket = return_resource_name(org['source'], 's3')
 
                         if bucket not in buckets:
                             key = '{} ({})'.format(bucket, dist.type)
@@ -378,6 +379,8 @@ class EC2PublicDns(DomainAudit):
 
         # no issues were found, return empty list
         return []
+
+
 # endregion
 
 
@@ -396,4 +399,22 @@ def dns_record_exists(record):
         return True
     except NXDOMAIN:
         return False
+
+
+def return_resource_name(record, resource_type):
+    """ Removes the trailing AWS domain from a DNS record
+        to return the resource name
+
+        e.g bucketname.s3.amazonaws.com will return bucketname
+
+    Args:
+        record (str): DNS record
+        resource_type: AWS Resource type (i.e. S3 Bucket, Elastic Beanstalk, etc..)
+
+    """
+    if resource_type == 's3':
+        regex = re.compile('.*(\.(?:s3-|s3){1}(?:.*)?\.amazonaws\.com)')
+        bucket_name = record.replace(regex.match(record).group(1), '')
+        return bucket_name
+
 # endregion
