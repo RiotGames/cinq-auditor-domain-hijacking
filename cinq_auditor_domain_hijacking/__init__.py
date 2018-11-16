@@ -215,6 +215,7 @@ class DomainHijackAuditor(BaseAuditor):
             self.log.error('Unable to parse DNS record {} for resource type {}/{}'.format(record, resource_type, e))
             return record
 
+
 # region Auditors
 class DomainAudit(object, metaclass=ABCMeta):
     def __init__(self):
@@ -226,6 +227,7 @@ class DomainAudit(object, metaclass=ABCMeta):
     @abstractmethod
     def audit(self, record, zone):
         """Returns a list of issues."""
+
 
 class ElasticBeanstalkAudit(DomainAudit):
     def __init__(self, beanstalks):
@@ -419,5 +421,4 @@ def dns_record_exists(record):
         return True
     except NXDOMAIN:
         return False
-
 # endregion
