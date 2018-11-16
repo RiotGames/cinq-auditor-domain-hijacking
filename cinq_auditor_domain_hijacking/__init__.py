@@ -1,4 +1,5 @@
-import logging, re
+import logging
+import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 
@@ -86,7 +87,7 @@ class DomainHijackAuditor(BaseAuditor):
             for dist in dists:
                 for org in dist.origins:
                     if org['type'] == 's3':
-                        bucket = return_resource_name(org['source'], 's3')
+                        bucket = self.return_resource_name(org['source'], 's3')
 
                         if bucket not in buckets:
                             key = '{} ({})'.format(bucket, dist.type)
@@ -193,6 +194,26 @@ class DomainHijackAuditor(BaseAuditor):
             except Exception as ex:
                 self.log.exception('Failed sending notification email: {}'.format(ex))
 
+    def return_resource_name(self, record, resource_type):
+        """ Removes the trailing AWS domain from a DNS record
+            to return the resource name
+
+            e.g bucketname.s3.amazonaws.com will return bucketname
+
+        Args:
+            record (str): DNS record
+            resource_type: AWS Resource type (i.e. S3 Bucket, Elastic Beanstalk, etc..)
+
+        """
+        try:
+            if resource_type == 's3':
+                regex = re.compile('.*(\.(?:s3-|s3){1}(?:.*)?\.amazonaws\.com)')
+                bucket_name = record.replace(regex.match(record).group(1), '')
+                return bucket_name
+
+        except Exception as e:
+            self.log.error('Unable to parse DNS record {} for resource type {}/{}'.format(record, resource_type, e))
+            return record
 
 # region Auditors
 class DomainAudit(object, metaclass=ABCMeta):
@@ -205,7 +226,6 @@ class DomainAudit(object, metaclass=ABCMeta):
     @abstractmethod
     def audit(self, record, zone):
         """Returns a list of issues."""
-
 
 class ElasticBeanstalkAudit(DomainAudit):
     def __init__(self, beanstalks):
@@ -399,22 +419,5 @@ def dns_record_exists(record):
         return True
     except NXDOMAIN:
         return False
-
-
-def return_resource_name(record, resource_type):
-    """ Removes the trailing AWS domain from a DNS record
-        to return the resource name
-
-        e.g bucketname.s3.amazonaws.com will return bucketname
-
-    Args:
-        record (str): DNS record
-        resource_type: AWS Resource type (i.e. S3 Bucket, Elastic Beanstalk, etc..)
-
-    """
-    if resource_type == 's3':
-        regex = re.compile('.*(\.(?:s3-|s3){1}(?:.*)?\.amazonaws\.com)')
-        bucket_name = record.replace(regex.match(record).group(1), '')
-        return bucket_name
 
 # endregion
